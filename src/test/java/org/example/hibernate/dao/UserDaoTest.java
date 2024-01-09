@@ -1,8 +1,8 @@
 package org.example.hibernate.dao;
 
-import jakarta.persistence.Tuple;
+import com.querydsl.core.Tuple;
 import lombok.Cleanup;
-import org.example.hibernate.dto.CompanyDto;
+import org.example.hibernate.dto.UserFilter;
 import org.example.hibernate.entity.Payment;
 import org.example.hibernate.entity.User;
 import org.example.hibernate.util.HibernateTestUtil;
@@ -86,8 +86,12 @@ public class UserDaoTest {
     @Test
     void testFindAveragePaymentAmountByFirstAndLastNames() {
         @Cleanup Session session = sessionFactory.openSession();
+        var filter = UserFilter.builder()
+                .firstName("Ivan")
+                .lastName("Ivanov")
+                .build();
         Double avgPayment =
-                userDao.findAveragePaymentAmountByFirstAndLastNames(session, "Ivan", "Ivanov");
+                userDao.findAveragePaymentAmountByFirstAndLastNames(session, filter);
 
         assertThat(avgPayment).isEqualTo(200);
     }
@@ -95,9 +99,12 @@ public class UserDaoTest {
     @Test
     void testFindCompanyNamesWithAvgUserPaymentsOrderedByCompanyName() {
         @Cleanup Session session = sessionFactory.openSession();
-        List<CompanyDto> companyInfo = userDao.findCompanyNamesWithAvgUserPaymentsOrderedByCompanyName(session);
+        List<Tuple> companyInfo = userDao.findCompanyNamesWithAvgUserPaymentsOrderedByCompanyName(session);
 
-        assertThat(companyInfo.stream().map(companyDto -> companyDto.getName() + " " + companyDto.getAmount()))
+        assertThat(
+                companyInfo.stream()
+                        .map(it -> it.get(0, String.class) + " " + it.get(1, Double.class))
+        )
                 .containsExactlyInAnyOrder("google 250.0", "meta 235.0", "jetBrains 500.0");
     }
 
