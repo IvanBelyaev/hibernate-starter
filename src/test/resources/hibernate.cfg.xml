@@ -1,0 +1,22 @@
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+
+    <session-factory>
+        <property name="show_sql">true</property>
+        <property name="format_sql">true</property>
+        <property name="hibernate.hbm2ddl.auto">create</property>
+
+        <mapping class="org.example.hibernate.entity.User"/>
+        <mapping class="org.example.hibernate.entity.Company"/>
+        <mapping class="org.example.hibernate.entity.Profile"/>
+        <mapping class="org.example.hibernate.entity.Chat"/>
+        <mapping class="org.example.hibernate.entity.UserChat"/>
+        <mapping class="org.example.hibernate.entity.Manager"/>
+        <mapping class="org.example.hibernate.entity.Programmer"/>
+        <mapping class="org.example.hibernate.entity.Payment"/>
+    </session-factory>
+
+</hibernate-configuration>
