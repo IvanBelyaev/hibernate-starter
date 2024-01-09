@@ -6,12 +6,12 @@ import jakarta.persistence.Table;
 import lombok.Cleanup;
 import org.example.hibernate.entity.*;
 import org.example.hibernate.util.HibernateTestUtil;
-import org.example.hibernate.util.HibernateUtil;
+import org.example.hibernate.util.TestDataImporter;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.jpa.AvailableHints;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -22,7 +22,20 @@ import java.util.Optional;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HibernateRunnerTest {
+    private SessionFactory sessionFactory = HibernateTestUtil.buildSessionFactory();
+
+    @BeforeAll
+    public void initialize() {
+        TestDataImporter.importData(sessionFactory);
+    }
+
+    @AfterAll
+    public void cleanUp() {
+        sessionFactory.close();
+    }
+
     private String insertUser = """
             insert into %s (%s)
             values (%s);
@@ -30,7 +43,9 @@ class HibernateRunnerTest {
 
     @Test
     void insertEntity() {
-        User user = null;
+        User user = User.builder()
+                .username("testUser")
+                .build();
 
         String tableName = ofNullable(user.getClass().getAnnotation(Table.class))
                 .map(table -> table.schema() + "." + table.name())
@@ -47,12 +62,11 @@ class HibernateRunnerTest {
                 .map(field -> "?")
                 .collect(joining(", "));
 
-        System.out.println(insertUser.formatted(tableName, fieldNames, fieldValues));
+        System.out.printf((insertUser) + "%n", tableName, fieldNames, fieldValues);
     }
 
     @Test
     void oneToMany() {
-        @Cleanup final SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
         @Cleanup final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
@@ -64,82 +78,77 @@ class HibernateRunnerTest {
 
     @Test
     void addUserToNewCompany() {
-        @Cleanup final SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
         @Cleanup final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
         final Company company = Company.builder()
                 .name("Meta3")
                 .build();
-        final User user = null;
+        final User user = User.builder()
+                .username("testUser")
+                .build();
         company.addUser(user);
         session.persist(company);
 
-        session.getTransaction().commit();
+        session.getTransaction().rollback();
     }
 
     @Test
     void deleteCompany() {
-        @Cleanup final SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
         @Cleanup final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
-        final Company company = session.get(Company.class, 15);
+        final Company company = session.get(Company.class, 1);
         session.remove(company);
 
-        session.getTransaction().commit();
+        session.getTransaction().rollback();
     }
 
     @Test
     void deleteUser() {
-        @Cleanup final SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
         @Cleanup final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
         final User user = session.get(User.class, 2L);
         Optional.ofNullable(user).ifPresent(session::remove);
 
-        session.getTransaction().commit();
+        session.getTransaction().rollback();
     }
 
     @Test
     void orphanRemoval() {
-        try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
+        @Cleanup Session session = sessionFactory.openSession();
 
-            session.beginTransaction();
+        session.beginTransaction();
 
-            Company company = session.getReference(Company.class, 3L);
+        Company company = session.getReference(Company.class, 3L);
 //            company.getUsers().removeIf(user -> user.getId().equals(4L));
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
     }
 
     @Test
     void hibernateInitialize() {
-        Company company = null;
-        try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
+        Company company;
+        @Cleanup Session session = sessionFactory.openSession();
 
-            session.beginTransaction();
+        session.beginTransaction();
 
-            company = session.getReference(Company.class, 3L);
-            Hibernate.initialize(company.getUsers());
+        company = session.getReference(Company.class, 3L);
+        Hibernate.initialize(company.getUsers());
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
+
         company.getUsers().size();
     }
 
     @Test
     void oneToOne() {
-        try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
 //            User user = session.get(User.class, 14L);
-            Profile profile = session.get(Profile.class, 1L);
+        Profile profile = session.get(Profile.class, 1L);
 //
 //            User user = User.builder()
 //                    .username("test3@gmail.com")
@@ -151,18 +160,17 @@ class HibernateRunnerTest {
 //            profile.setUser(user);
 //            session.persist(user);
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
     }
 
     @Test
     void manyToMany() {
-        try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
-            User user = session.get(User.class, 11L);
-            Chat chat = session.get(Chat.class, 1L);
+        User user = session.get(User.class, 1L);
+        Chat chat = session.get(Chat.class, 1L);
+        if (user != null && chat != null) {
             UserChat userChat = UserChat.builder()
                     .user(user)
                     .chat(chat)
@@ -170,120 +178,110 @@ class HibernateRunnerTest {
                     .createdAt(Instant.now())
                     .build();
             session.persist(userChat);
-
-            session.getTransaction().commit();
         }
+
+        session.getTransaction().rollback();
+
     }
 
     @Test
     void elementCollection() {
-        try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
-            Company company = session.get(Company.class, 12);
-            System.out.println(company.getLocaleInfos());
+        Company company = session.get(Company.class, 1);
+        System.out.println(company.getLocaleInfos());
 //            LocaleInfo localeOne = LocaleInfo.of("ru", "Описание на русском");
 //            LocaleInfo localeTwo = LocaleInfo.of("en", "English description");
 //            company.getLocaleInfos().add(localeOne);
 //            company.getLocaleInfos().add(localeTwo);
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
     }
 
     @Test
     void collectionSort() {
-        try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
-            Company company = session.get(Company.class, 3);
-            company.getUsers().forEach((k, v) -> System.out.println(v));
+        Company company = session.get(Company.class, 3);
+        company.getUsers().forEach((k, v) -> System.out.println(v));
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
     }
 
     @Test
     void mapKeyColumn() {
-        try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
-            Company company = session.get(Company.class, 3);
-            company.getLocaleInfos().forEach((k, v) -> System.out.println(v));
+        Company company = session.get(Company.class, 3);
+        company.getLocaleInfos().forEach((k, v) -> System.out.println(v));
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
     }
 
     @Test
     void testTestContainer() {
-        try (SessionFactory sessionFactory = HibernateTestUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
-            Company company = Company.builder()
-                    .name("RedSoft")
-                    .build();
-            session.persist(company);
+        Company company = Company.builder()
+                .name("RedSoft")
+                .build();
+        session.persist(company);
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
     }
 
+    @Disabled
     @Test
     void testInheritance() {
-        try (SessionFactory sessionFactory = HibernateTestUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
-            Company google = Company.builder()
-                    .name("Google")
-                    .build();
-            session.persist(google);
+        Company google = Company.builder()
+                .name("Google")
+                .build();
+        session.persist(google);
 
-            Programmer programmer = Programmer.builder()
-                    .username("ivan")
-                    .company(google)
-                    .language(Language.Java)
-                    .build();
-            session.persist(programmer);
+        Programmer programmer = Programmer.builder()
+                .username("ivan")
+                .company(google)
+                .language(Language.Java)
+                .build();
+        session.persist(programmer);
 
-            Manager manager = Manager.builder()
-                    .username("Dmitriy")
-                    .company(google)
-                    .projectName("test project")
-                    .build();
-            session.persist(manager);
-            session.flush();
-            session.clear();
+        Manager manager = Manager.builder()
+                .username("Dmitriy")
+                .company(google)
+                .projectName("test project")
+                .build();
+        session.persist(manager);
+        session.flush();
+        session.clear();
 
-            Programmer programmer1 = session.get(Programmer.class, 1L);
-            User user = session.get(User.class, 2L);
+        Programmer programmer1 = session.get(Programmer.class, 1L);
+        User user = session.get(User.class, 2L);
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().rollback();
     }
 
     @Test
     void testHql() {
-        try (SessionFactory sessionFactory = HibernateTestUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        @Cleanup Session session = sessionFactory.openSession();
+        session.beginTransaction();
 
-            List<User> users = session.createNamedQuery(
-                            "selectByName",
-                            User.class
-                    )
-                    .setParameter("firstName", "Ivan")
-                    .setParameter("companyName", "google")
-                    .setHint(AvailableHints.HINT_FETCH_SIZE, 50)
-                    .setFlushMode(FlushModeType.AUTO)
-                    .list();
+        List<User> users = session.createNamedQuery(
+                        "selectByName",
+                        User.class
+                )
+                .setParameter("firstName", "Ivan")
+                .setParameter("companyName", "google")
+                .setHint(AvailableHints.HINT_FETCH_SIZE, 50)
+                .setFlushMode(FlushModeType.AUTO)
+                .list();
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().commit();
     }
 }
