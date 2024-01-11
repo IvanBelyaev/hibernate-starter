@@ -3,11 +3,35 @@ package org.example.hibernate.entity;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.FetchProfile;
+import org.hibernate.annotations.FetchProfile.FetchOverride;
 import org.hibernate.annotations.Type;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@NamedEntityGraph(
+        name = "withCompanyAndChats",
+        attributeNodes = {
+                @NamedAttributeNode("company"),
+                @NamedAttributeNode(value = "userChats", subgraph = "chats")
+        },
+        subgraphs = {
+                @NamedSubgraph(name = "chats", attributeNodes = {
+                        @NamedAttributeNode("chat")
+                })
+        }
+)
+@FetchProfile(name = "withCompanyAndPayments", fetchOverrides = {
+        @FetchOverride(
+                entity = User.class, association = "company", mode = FetchMode.JOIN
+        ),
+        @FetchOverride(
+                entity = User.class, association = "payments", mode = FetchMode.JOIN
+        )
+})
 @NamedQuery(name = "selectByName",
         query = "select u " +
                 "from User u " +
@@ -18,7 +42,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "username")
-@ToString(exclude = {"company", "profile", "userChats", "payments"})
+@ToString(exclude = {"company", "userChats", "payments"})
 @Entity
 @Table(name = "users", schema = "public")
 @Builder
@@ -39,16 +63,19 @@ public /*abstract */class User implements Comparable<User> {
     private String info;
 
     @ManyToOne(fetch = FetchType.LAZY)
+//    @Fetch(FetchMode.JOIN)
     private Company company;
 
-    @OneToOne(
-            mappedBy = "user",
-            cascade = CascadeType.ALL
-    )
-    private Profile profile;
+//    @OneToOne(
+//            mappedBy = "user",
+//            cascade = CascadeType.ALL
+//    )
+//    private Profile profile;
 
     @OneToMany(mappedBy = "receiver")
     @Builder.Default
+//    @BatchSize(size = 2)
+    @Fetch(FetchMode.SUBSELECT)
     private List<Payment> payments = new ArrayList<>();
 
     @Builder.Default

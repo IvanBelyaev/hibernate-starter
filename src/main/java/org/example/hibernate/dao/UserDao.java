@@ -154,7 +154,7 @@ public class UserDao {
         return new JPAQuery<Payment>(session)
                 .select(payment)
                 .from(payment)
-                .join(payment.receiver, user)
+                .join(payment.receiver, user).fetchJoin()
                 .join(user.company, company)
                 .where(company.name.eq(companyName))
                 .orderBy(user.personalInfo.firstName.asc(), payment.amount.asc())
@@ -166,6 +166,7 @@ public class UserDao {
 //        var criteria = cb.createQuery(Payment.class);
 //        var payment = criteria.from(Payment.class);
 //        var user = payment.join(Payment_.receiver);
+//        payment.fetch(Payment_.receiver);
 //        var company = user.join(User_.company);
 //
 //        criteria.select(payment).where(

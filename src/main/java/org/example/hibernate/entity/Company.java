@@ -15,6 +15,7 @@ import java.util.TreeMap;
 @EqualsAndHashCode(of = "name")
 @Builder
 @Entity
+//@BatchSize(size = 2)
 public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
