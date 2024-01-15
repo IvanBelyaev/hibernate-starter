@@ -11,10 +11,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+//@OptimisticLocking(type = OptimisticLockType.ALL)
+//@DynamicUpdate
+//@OptimisticLocking(type = OptimisticLockType.VERSION)
 public class Payment implements BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+//    @Version
+//    private Long version;
 
     @Column(nullable = false)
     private Integer amount;

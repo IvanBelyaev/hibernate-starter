@@ -1,49 +1,53 @@
 package org.example.hibernate;
 
-import org.example.hibernate.entity.User;
-import org.example.hibernate.entity.UserChat;
+import jakarta.transaction.Transactional;
+import org.example.hibernate.entity.Payment;
 import org.example.hibernate.util.HibernateUtil;
+import org.example.hibernate.util.TestDataImporter;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.jpa.AvailableHints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class HibernateRunner {
     private static final Logger log = LoggerFactory.getLogger(HibernateRunner.class);
 
+    @Transactional
     public static void main(String[] args) {
         try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-//            session.enableFetchProfile("withCompanyAndPayments");
+             Session sessionOne = sessionFactory.openSession();
+             Session sessionTwo = sessionFactory.openSession()) {
+            TestDataImporter.importData(sessionFactory);
+            sessionTwo.beginTransaction();
 
-            var graph = session.createEntityGraph(User.class);
-            graph.addAttributeNodes("company", "userChats");
-            var chatSubgraph = graph.addSubgraph("userChats", UserChat.class);
-            chatSubgraph.addAttributeNodes("chat");
+//            sessionTwo.setDefaultReadOnly(true);
 
-            Map<String, Object> params = new HashMap<>();
-//            params.put(AvailableHints.HINT_SPEC_LOAD_GRAPH, session.getEntityGraph("withCompanyAndChats"));
-            params.put(AvailableHints.HINT_SPEC_FETCH_GRAPH, graph);
+//            sessionTwo.createNativeQuery("SET TRANSACTION READ ONLY;", Void.class).executeUpdate();
 
-            var user = session.find(User.class, 1L, params);
-            System.out.println(user.getUserChats().size());
-            System.out.println(user.getCompany().getName());
+//            sessionOne.doWork(connection ->
+//                    System.out.printf("transaction isolation level - %d%n",
+//                            connection.getTransactionIsolation()));
 
-            var users =
-                    session.createQuery("select u from User u join fetch u.company", User.class)
-//                            .setHint(AvailableHints.HINT_SPEC_LOAD_GRAPH,
-//                                    session.getEntityGraph("withCompanyAndChats"))
-                            .setHint(AvailableHints.HINT_SPEC_FETCH_GRAPH, graph)
-                            .list();
-            users.forEach(it -> System.out.println(it.getUserChats().size()));
-            users.forEach(it -> System.out.println(it.getCompany().getName()));
+//            Map<String, Object> props = Map.of(AvailableHints.HINT_SPEC_LOCK_TIMEOUT, 10000);
+//
+//            CompletableFuture
+//                    .runAsync(() -> {
+//                        sessionOne.beginTransaction();
+//
+//
+//                        var payment = sessionOne.find(Payment.class, 1L,
+//                                LockModeType.PESSIMISTIC_READ, props);
+//                        payment.setAmount(payment.getAmount() + 10);
+//
+//                        sessionOne.getTransaction().commit();
+//                    });
 
-            session.getTransaction().commit();
+
+            var theSamePayment = sessionTwo.find(Payment.class, 1L);
+            theSamePayment.setAmount(theSamePayment.getAmount() + 20);
+
+            sessionTwo.getTransaction().commit();
+
         }
     }
 }
