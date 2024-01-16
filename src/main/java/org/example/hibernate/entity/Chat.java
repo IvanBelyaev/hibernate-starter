@@ -23,6 +23,9 @@ public class Chat {
     private String name;
 
     @Builder.Default
+    private int count = 0;
+
+    @Builder.Default
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "chat")
     private List<UserChat> userChats = new ArrayList<>();
 }

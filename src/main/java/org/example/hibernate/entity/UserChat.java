@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.example.hibernate.listener.UserChatListener;
 
 import java.time.Instant;
 
@@ -15,11 +16,20 @@ import java.time.Instant;
 @Entity
 @Table(name = "users_chat")
 @EqualsAndHashCode(callSuper = false)
+@EntityListeners(UserChatListener.class)
 public class UserChat extends AuditableEntity<Long> {
 
     @Builder
-    public UserChat(Long id, User user, Chat chat, Instant createdAt, String createdBy) {
-        super(createdAt, createdBy);
+    public UserChat(
+            Long id,
+            User user,
+            Chat chat,
+            Instant createdAt,
+            String createdBy,
+            Instant updatedAt,
+            String updatedBy
+    ) {
+        super(createdAt, createdBy, updatedAt, updatedBy);
         this.id = id;
         this.user = user;
         this.chat = chat;

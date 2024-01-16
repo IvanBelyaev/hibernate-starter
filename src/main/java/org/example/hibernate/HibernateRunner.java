@@ -2,6 +2,7 @@ package org.example.hibernate;
 
 import jakarta.transaction.Transactional;
 import org.example.hibernate.entity.Payment;
+import org.example.hibernate.interceptor.GlobalInterceptor;
 import org.example.hibernate.util.HibernateUtil;
 import org.example.hibernate.util.TestDataImporter;
 import org.hibernate.Session;
@@ -15,38 +16,20 @@ public class HibernateRunner {
     @Transactional
     public static void main(String[] args) {
         try (SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
-             Session sessionOne = sessionFactory.openSession();
-             Session sessionTwo = sessionFactory.openSession()) {
+             Session session = sessionFactory
+                     .withOptions()
+                     .interceptor(new GlobalInterceptor())
+                     .openSession()) {
             TestDataImporter.importData(sessionFactory);
-            sessionTwo.beginTransaction();
+            session.beginTransaction();
 
-//            sessionTwo.setDefaultReadOnly(true);
+            var payment = session.get(Payment.class, 1L);
+            payment.setAmount(payment.getAmount() + 10);
 
-//            sessionTwo.createNativeQuery("SET TRANSACTION READ ONLY;", Void.class).executeUpdate();
+            var paymentForRemove = session.get(Payment.class, 2L);
+            session.remove(paymentForRemove);
 
-//            sessionOne.doWork(connection ->
-//                    System.out.printf("transaction isolation level - %d%n",
-//                            connection.getTransactionIsolation()));
-
-//            Map<String, Object> props = Map.of(AvailableHints.HINT_SPEC_LOCK_TIMEOUT, 10000);
-//
-//            CompletableFuture
-//                    .runAsync(() -> {
-//                        sessionOne.beginTransaction();
-//
-//
-//                        var payment = sessionOne.find(Payment.class, 1L,
-//                                LockModeType.PESSIMISTIC_READ, props);
-//                        payment.setAmount(payment.getAmount() + 10);
-//
-//                        sessionOne.getTransaction().commit();
-//                    });
-
-
-            var theSamePayment = sessionTwo.find(Payment.class, 1L);
-            theSamePayment.setAmount(theSamePayment.getAmount() + 20);
-
-            sessionTwo.getTransaction().commit();
+            session.getTransaction().commit();
 
         }
     }
