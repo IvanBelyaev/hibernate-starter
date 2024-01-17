@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.hibernate.listener.AuditDatesListener;
+import org.hibernate.envers.Audited;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -17,6 +18,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @EntityListeners(AuditDatesListener.class)
+@Audited
 public abstract class AuditableEntity<T extends Serializable> implements BaseEntity<T> {
     private Instant createdAt;
     private String createdBy;

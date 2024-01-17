@@ -29,6 +29,7 @@ configurations {
 
 dependencies {
     implementation 'org.hibernate:hibernate-core:6.2.7.Final'
+    implementation 'org.hibernate:hibernate-envers:6.2.7.Final'
     runtimeOnly 'org.postgresql:postgresql:42.6.0'
     implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.0'
     implementation 'com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.14.2'
