@@ -2,6 +2,8 @@ package org.example.hibernate.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 
@@ -15,6 +17,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
 //@DynamicUpdate
 //@OptimisticLocking(type = OptimisticLockType.VERSION)
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Payment extends AuditableEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

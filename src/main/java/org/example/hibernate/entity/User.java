@@ -2,12 +2,13 @@ package org.example.hibernate.entity;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
 import lombok.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.FetchProfile;
+import org.hibernate.annotations.*;
+import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.FetchProfile.FetchOverride;
-import org.hibernate.annotations.Type;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,7 @@ import java.util.List;
 @Table(name = "users", schema = "public")
 @Builder
 //@Inheritance(strategy = InheritanceType.JOINED)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public /*abstract */class User implements Comparable<User> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -64,6 +66,7 @@ public /*abstract */class User implements Comparable<User> {
 
     @ManyToOne(fetch = FetchType.LAZY)
 //    @Fetch(FetchMode.JOIN)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private Company company;
 
 //    @OneToOne(
@@ -76,10 +79,12 @@ public /*abstract */class User implements Comparable<User> {
     @Builder.Default
 //    @BatchSize(size = 2)
     @Fetch(FetchMode.SUBSELECT)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private List<Payment> payments = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "Users")
     private List<UserChat> userChats = new ArrayList<>();
 
     @Override

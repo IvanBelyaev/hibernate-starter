@@ -2,6 +2,8 @@ package org.example.hibernate.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.SortNatural;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
@@ -19,6 +21,7 @@ import java.util.TreeMap;
 @Entity
 //@BatchSize(size = 2)
 @Audited
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

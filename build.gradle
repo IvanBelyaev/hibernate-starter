@@ -35,6 +35,9 @@ dependencies {
     implementation 'com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.14.2'
     implementation 'org.slf4j:slf4j-log4j12:2.0.9'
 
+    implementation 'org.hibernate:hibernate-jcache:6.2.7.Final'
+    implementation 'org.ehcache:ehcache:3.10.8:jakarta'
+
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
