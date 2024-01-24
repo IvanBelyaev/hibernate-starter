@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 import lombok.*;
 import org.hibernate.annotations.*;
 import org.hibernate.annotations.Cache;
@@ -23,6 +24,12 @@ import java.util.List;
                 @NamedSubgraph(name = "chats", attributeNodes = {
                         @NamedAttributeNode("chat")
                 })
+        }
+)
+@NamedEntityGraph(
+        name = "withCompany",
+        attributeNodes = {
+                @NamedAttributeNode("company")
         }
 )
 @FetchProfile(name = "withCompanyAndPayments", fetchOverrides = {
@@ -49,12 +56,13 @@ import java.util.List;
 @Builder
 //@Inheritance(strategy = InheritanceType.JOINED)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public /*abstract */class User implements Comparable<User> {
+public /*abstract */class User implements BaseEntity<Long>, Comparable<User> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @AttributeOverride(name = "birthDate", column = @Column(name = "birth_date"))
+    @Valid
     private PersonalInfo personalInfo;
 
     @Column(unique = true, nullable = false)

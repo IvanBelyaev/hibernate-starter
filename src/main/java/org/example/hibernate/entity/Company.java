@@ -22,10 +22,10 @@ import java.util.TreeMap;
 //@BatchSize(size = 2)
 @Audited
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Company {
+public class Company implements BaseEntity<Integer> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @Builder.Default
     @ElementCollection

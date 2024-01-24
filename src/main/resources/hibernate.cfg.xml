@@ -21,6 +21,7 @@
         <property name="hibernate.cache.use_query_cache">true</property>
         <property name="hibernate.generate_statistics">true</property>
 <!--        <property name="hibernate.connection.isolation">8</property>-->
+        <property name="hibernate.current_session_context_class">thread</property>
 
         <mapping class="org.example.hibernate.entity.User"/>
         <mapping class="org.example.hibernate.entity.Company"/>

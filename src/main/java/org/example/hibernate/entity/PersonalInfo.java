@@ -1,6 +1,7 @@
 package org.example.hibernate.entity;
 
 import jakarta.persistence.Embeddable;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class PersonalInfo implements Serializable {
     @Serial
     private static final long serialVersionUID = 8601019012476352625L;
 
+    @NotNull
     private String firstName;
     private String lastName;
     //    @Convert(converter = BirthdayConverter.class)
